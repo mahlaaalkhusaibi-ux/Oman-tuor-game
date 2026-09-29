@@ -92,9 +92,6 @@
     .mentor-map-svg svg{width:100%;height:auto}
 
     .speech{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:8;width:min(92%,520px);padding:8px 14px;border:3px solid #d59024;border-radius:16px;background:#fff9eb;text-align:center;font-weight:800;font-size:0.95rem;box-shadow:0 5px 0 rgba(82,48,20,.14)}
-    .controls{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;direction:ltr;gap:12px;z-index:25}
-    .control-btn{display:grid;place-items:center;width:64px;height:56px;border:3px solid #bb7726;border-radius:14px;background:#fff9e9;color:#60331f;box-shadow:0 5px 0 #8c571c;cursor:pointer;font-size:1.4rem;font-weight:900}
-    .control-btn:active{translate:0 3px;box-shadow:0 2px 0 #8c571c}
 
     .overlay{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:15px;background:rgba(18,44,51,.75)}
     .overlay.show{display:flex}
@@ -199,7 +196,7 @@
        <div class="sun" aria-hidden="true"></div>
        <div class="cloud" aria-hidden="true"></div>
        <div id="route-map" class="route-map" aria-hidden="true"></div>
-       <div id="speech" class="speech" aria-live="polite">مرحباً بك يا بطل! استخدم سهمي اليمين واليسار لتغيير المسار والاصطدام بصناديق المعرفة.</div>
+       <div id="speech" class="speech" aria-live="polite">مرحباً بك يا بطل! حرّك اللاعب بالسحب أو بأسهم لوحة المفاتيح لتغيير المسار والاصطدام بصناديق المعرفة.</div>
        <div id="road" class="road">
         <div class="lane-lines" aria-hidden="true"></div>
        </div>
@@ -208,10 +205,6 @@
         <div class="shadow"></div>
         <div class="stage3d"><div class="lean"><div id="rig" class="rig"></div></div></div>
        </div>
-       <nav class="controls" aria-label="أزرار التحكم">
-        <button id="right-btn" class="control-btn" type="button" aria-label="تحرك إلى اليمين">➡️</button> 
-        <button id="left-btn" class="control-btn" type="button" aria-label="تحرك إلى اليسار">⬅️</button>
-       </nav>
       </div>
      </div>
     </section>
@@ -948,12 +941,6 @@
         });
       });
     });
-
-    const leftBtn = document.getElementById("left-btn");
-    const rightBtn = document.getElementById("right-btn");
-
-    leftBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); move(-1); });
-    rightBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); move(1); });
 
     document.getElementById("player-name").addEventListener("input", e => e.target.classList.remove("invalid"));
     document.getElementById("start-btn").addEventListener("click", startGame);
