@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>البحث عن الكنز في بلادي</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap');
+        
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f4e8c1;
+            overflow: hidden;
+            touch-action: none; /* Prevent scroll on touch devices */
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%; height: 100%;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 60%, #c2b280 60%, #8b7355 100%);
+            display: none;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* UI Overlays */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100; text-align: center; padding: 20px; box-sizing: border-box;
+        }
+
+        h1 { color: #8B0000; font-size: 3rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); margin-bottom: 10px; }
+        .credit { color: #555; font-size: 1.2rem; margin-bottom: 30px; font-weight: bold; }
+
+        input[type="text"] {
+            padding: 15px; font-size: 1.2rem; border: 2px solid #8B0000; border-radius: 10px;
+            margin-bottom: 20px; width: 80%; max-width: 300px; text-align: center; font-family: 'Tajawal';
+        }
+
+        .char-selection { display: flex; gap: 20px; margin-bottom: 30px; }
+        .char-btn {
+            background: #fff; border: 3px solid #ccc; border-radius: 15px; padding: 15px;
+            cursor: pointer; transition: 0.3s; width: 140px;
+        }
+        .char-btn:hover, .char-btn.selected { border-color: #8B0000; background: #ffe4e1; transform: scale(1.05); }
+        .char-icon { font-size: 4rem; margin-bottom: 10px; }
+        .char-desc { font-size: 0.9rem; color: #333; font-weight: bold; }
+
+        button.start-btn, .action-btn {
+            background-color: #8B0000; color: white; border: none; padding: 15px 40px;
+            font-size: 1.5rem; border-radius: 30px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            font-family: 'Tajawal'; transition: 0.2s;
+        }
+        button.start-btn:hover { background-color: #600000; transform: translateY(-2px); }
+
+        /* Controls */
+        #controls {
+            position: absolute; bottom: 20px; left: 0; width: 100%;
+            display: flex; justify-content: space-between; padding: 0 30px; box-sizing: border-box;
+            z-index: 10;
+        }
+        .ctrl-group { display: flex; gap: 15px; }
+        .ctrl-btn {
+            width: 70px; height: 70px; background: rgba(255,255,255,0.7); border: 2px solid #8B0000;
+            border-radius: 50%; font-size: 2rem; color: #8B0000; font-weight: bold; cursor: pointer;
+            user-select: none;
+        }
+        .ctrl-btn:active { background: rgba(139,0,0,0.7); color: white; }
+
+        /* HUD */
+        #hud {
+            position: absolute; top: 15px; left: 20px; right: 20px;
+            display: flex; justify-content: space-between; z-index: 10;
+            font-size: 1.5rem; font-weight: bold; color: #8B0000;
+            background: rgba(255,255,255,0.8); padding: 10px 20px; border-radius: 15px;
+        }
+
+        /* Quiz Modal */
+        #quiz-modal {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; border: 4px solid #8B0000; border-radius: 20px; padding: 30px;
+            width: 85%; max-width: 500px; z-index: 200; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center;
+        }
+        #speaker-info { color: #d4af37; font-weight: bold; margin-bottom: 10px; font-size: 1.2rem; }
+        #question-text { font-size: 1.4rem; margin-bottom: 20px; color: #333; }
+        .options { display: flex; flex-direction: column; gap: 10px; }
+        .opt-btn {
+            background: #f4f4f4; border: 2px solid #ddd; padding: 12px; font-size: 1.2rem;
+            border-radius: 10px; cursor: pointer; font-family: 'Tajawal'; transition: 0.2s;
+        }
+        .opt-btn:hover { background: #e0f6ff; border-color: #87CEEB; }
+        #feedback { margin-top: 15px; font-weight: bold; font-size: 1.2rem; }
+
+        /* Certificate */
+        #certificate {
+            display: none; background: #fffbe6; border: 10px solid #d4af37; padding: 40px;
+        }
+        .cert-title { color: #d4af37; font-size: 2.5rem; margin-bottom: 10px; }
+        .cert-badge { font-size: 6rem; margin: 20px 0; }
+        
+    </style>
+</head>
+<body>
+
+    <!-- Start & Character Selection Screen -->
+    <div id="start-screen" class="overlay">
+        <h1>البحث عن الكنز في بلادي</h1>
+        <div class="credit">من تصميم الأستاذة مهلاء الخصيبية</div>
+        
+        <input type="text" id="player-name" placeholder="اكتب اسمك هنا أيها البطل..." required>
+        
+        <div class="char-selection">
+            <div class="char-btn" id="char-girl" onclick="selectChar('girl')">
+                <div class="char-icon">🧕🏽</div>
+                <div class="char-desc"><br</div>
+            </div>
+            <div class="char-btn" id="char-boy" onclick="selectChar('boy')">
+                <div class="char-icon">👦🏽</div>
+                <div class="char-desc"><br</div>
+            </div>
+        </div>
+        
+        <button class="start-btn" onclick="startGame()">ابدأ الرحلة</button>
+    </div>
+
+    <!-- Main Game Container -->
+    <div id="game-container">
+        <div id="hud">
+            <div id="hud-stage">المرحلة: 1 (مسندم وصحار)</div>
+            <div id="hud-coins">العملات: 0 🪙</div>
+            <div id="hud-badge">الوسام: لا يوجد</div>
+        </div>
+        
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="controls">
+            <div class="ctrl-group">
+                <button class="ctrl-btn" id="btn-right">➡</button>
+                <button class="ctrl-btn" id="btn-left">⬅</button>
+            </div>
+            <button class="ctrl-btn" id="btn-jump">⬆</button>
+        </div>
+    </div>
+
+    <!-- Quiz/Dialogue Modal -->
+    <div id="quiz-modal">
+        <div id="speaker-info"></div>
+        <div id="question-text"></div>
+        <div class="options" id="options-container"></div>
+        <div id="feedback"></div>
+        <button class="action-btn" id="next-btn" style="display:none; margin-top:20px;" onclick="closeQuiz()">متابعة الرحلة</button>
+    </div>
+
+    <!-- Certificate Overlay -->
+    <div id="certificate" class="overlay">
+        <div class="cert-title">شهادة إنجاز وتقدير</div>
+        <div class="cert-badge">🏅</div>
+        <h2 id="cert-name" style="color:#8B0000; font-size: 2rem;"></h2>
+        <p style="font-size: 1.5rem; color:#333;">لقد أتممت بنجاح جميع مراحل "البحث عن الكنز في بلادي"</p>
+        <p style="font-size: 1.3rem; color:#555; font-weight: bold;">وحصلت على الوسام البلاتيني الفاخر في مدرسة النبراس للتعليم الأساسي!</p>
+        <button class="start-btn" style="margin-top: 30px;" onclick="location.reload()">العب مرة أخرى</button>
+    </div>
+
+<script>
+    // --- Game Data & Stages ---
+    const stages = [
+        { id: 1, name: "مسندم وصحار", figure: "الإمام ناصر بن مرشد", badge: "🥉 برونزي", requiredScore: 3 },
+        { id: 2, name: "مطرح وصور", figure: "أحمد بن ماجد", badge: "🥈 فضي", requiredScore: 6 },
+        { id: 3, name: "سوق نزوى", figure: "العالِمة عائشة الريامية", badge: "🥇 ذهبي", requiredScore: 9 },
+        { id: 4, name: "الدقم وصلالة", figure: "الأديبة شمساء الخليلية", badge: "💎 بلاتيني", requiredScore: 12 }
+    ];
+
+    // بنك الأسئلة (نماذج تغطي المراحل الأربع - يمكن للمعلمة التعديل والإضافة لتصل إلى 27 سؤال)
+    const questionBank = [
+        // المرحلة الأولى (المعرفة والفهم)
+        { stage: 1, q: "ما هو العدد الذي يلي 45 عند العد التصاعدي بالآحاد؟", options: ["46", "44", "55"], ans: 0, hint: "تذكر، العد التصاعدي يعني إضافة 1." },
+        { stage: 1, q: "إذا قمنا بالعد القفزي اثنينات: 2، 4، 6، ... ماذا يأتي بعد ذلك؟", options: ["7", "8", "10"], ans: 1, hint: "أضف 2 للرقم 6." },
+        { stage: 1, q: "ما هي القيمة المكانية للرقم 3 في العدد 135؟", options: ["آحاد", "عشرات", "مئات"], ans: 1, hint: "الرقم 5 آحاد، وماذا عن الـ 3؟" },
+        
+        // المرحلة الثانية (التطبيق)
+        { stage: 2, q: "اشترى محمد سفينة خشبية صغيرة من صور بـ 350 بيسة، ودفع 500 بيسة. كم الباقي؟", options: ["100 بيسة", "150 بيسة", "200 بيسة"], ans: 1, hint: "اطرح 350 من 500." },
+        { stage: 2, q: "في سوق مطرح، يوجد 45 صندوق حلوى، بيع منها 12. كم صندوقاً بقي؟", options: ["33", "23", "30"], ans: 0, hint: "اطرح الآحاد من الآحاد والعشرات من العشرات." },
+        
+        // المرحلة الثالثة (الاستدلال)
+        { stage: 3, q: "اكتشف النمط في حصن نزوى: 150، 140، 130، ... ما العدد التالي؟", options: ["120", "135", "110"], ans: 0, hint: "نحن ننقص 10 في كل مرة (عد تنازلي بالعشرات)." },
+        { stage: 3, q: "عدد إذا جمعت أحاده وعشراته كان الناتج 8، وهو أكبر من 50 وأصغر من 60؟", options: ["53", "62", "44"], ans: 0, hint: "الرقم في العشرات يجب أن يكون 5." },
+        
+        // المرحلة الرابعة (القدرات العليا)
+        { stage: 4, q: "لغز خريف صلالة: أنا عدد من 3 منازل، مئاتي ضعف آحادي، وعشراتي صفر. من أنا؟", options: ["402", "204", "301"], ans: 0, hint: "ابحث عن الرقم الذي مئاته (الرقم الأيسر) ضعف آحاده (الرقم الأيمن)." },
+        { stage: 4, q: "إذا كان وزن اللبان العماني 250 جرام، وأضفنا له 150 جرام. هل المجموع يساوي نصف كيلوجرام (500 جرام)؟", options: ["لا، المجموع 400 جرام", "نعم، المجموع 500 جرام", "لا، المجموع 300 جرام"], ans: 0, hint: "اجمع 250 + 150 أولاً." }
+    ];
+
+    // --- State Variables ---
+    let playerName = "";
+    let playerChar = ""; // 'girl' or 'boy'
+    let score = 0;
+    let currentStageIndex = 0;
+    let currentQuestionIndex = 0;
+    let isPaused = false;
+    let stageQuestions = [];
+
+    // --- Canvas & Physics Setup ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    
+    function resizeCanvas() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const player = {
+        x: 50, y: height - 150, width: 60, height: 80,
+        dx: 0, dy: 0, speed: 5, jumpPower: -15, grounded: false
+    };
+
+    const gravity = 0.8;
+    let coins = [];
+    let cameraX = 0;
+
+    // Control States
+    const keys = { right: false, left: false, up: false };
+
+    // --- UI Interactions ---
+    function selectChar(char) {
+        document.getElementById('char-girl').classList.remove('selected');
+        document.getElementById('char-boy').classList.remove('selected');
+        document.getElementById('char-' + char).classList.add('selected');
+        playerChar = char;
+    }
+
+    function startGame() {
+        const nameInput = document.getElementById('player-name').value.trim();
+        if(!nameInput) { alert("الرجاء كتابة اسمك للبدء!"); return; }
+        if(!playerChar) { alert("الرجاء اختيار شخصيتك!"); return; }
+        
+        playerName = nameInput;
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('game-container').style.display = 'block';
+        
+        loadStage(0);
+        gameLoop();
+    }
+
+    function loadStage(index) {
+        currentStageIndex = index;
+        if(currentStageIndex >= stages.length) { showCertificate(); return; }
+        
+        const stg = stages[currentStageIndex];
+        document.getElementById('hud-stage').innerText = `المرحلة: ${stg.id} (${stg.name})`;
+        
+        // Filter questions for this stage
+        stageQuestions = questionBank.filter(q => q.stage === stg.id);
+        currentQuestionIndex = 0;
+        
+        // Reset player & generate new coins for the stage
+        player.x = 50; cameraX = 0;
+        generateCoins(stageQuestions.length);
+    }
+
+    function generateCoins(count) {
+        coins = [];
+        let startX = 300;
+        for(let i=0; i<count; i++) {
+            coins.push({
+                x: startX + (i * 400),
+                y: height - 180 - Math.random() * 50, // slightly randomized height
+                width: 40, height: 40, collected: false, qIndex: i
+            });
+        }
+    }
+
+    // --- Game Loop & Rendering ---
+    function gameLoop() {
+        if(!isPaused) {
+            update();
+            draw();
+        }
+        requestAnimationFrame(gameLoop);
+    }
+
+    function update() {
+        // Horizontal movement
+        if(keys.right) player.dx = player.speed;
+        else if(keys.left) player.dx = -player.speed;
+        else player.dx = 0;
+
+        player.x += player.dx;
+        
+        // Keep player from going back past start
+        if(player.x < 50) player.x = 50;
+
+        // Camera follow
+        cameraX = player.x - 100;
+
+        // Gravity & Jumping
+        player.dy += gravity;
+        player.y += player.dy;
+
+        // Ground collision
+        const groundY = height - 100;
+        if(player.y + player.height > groundY) {
+            player.y = groundY - player.height;
+            player.dy = 0;
+            player.grounded = true;
+        } else {
+            player.grounded = false;
+        }
+        if(keys.up && player.grounded) {
+            player.dy = player.jumpPower;
+            player.grounded = false;
+            keys.up = false; // Reset jump key to prevent holding
+        }
+
+        // Coin Collision
+        coins.forEach(coin => {
+            if(!coin.collected && 
+               player.x < coin.x + coin.width && 
+               player.x + player.width > coin.x &&
+               player.y < coin.y + coin.height &&
+               player.y + player.height > coin.y) {
+                
+                coin.collected = true;
+                triggerQuestion(coin.qIndex);
+            }
+        });
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw Ground
+        ctx.fillStyle = "#8b7355";
+        ctx.fillRect(0, height - 100, width, 100);
+        ctx.fillStyle = "#6b5e43";
+        ctx.fillRect(0, height - 90, width, 90);
+
+        ctx.save();
+        ctx.translate(-cameraX, 0);
+
+        // Draw Coins
+        coins.forEach(coin => {
+            if(!coin.collected) {
+                ctx.fillStyle = "gold";
+                ctx.beginPath();
+                ctx.arc(coin.x + coin.width/2, coin.y + coin.height/2, 20, 0, Math.PI*2);
+                ctx.fill();
+                ctx.strokeStyle = "#b8860b";
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.fillStyle = "#fff";
+                ctx.font = "20px Arial";
+                ctx.fillText("🪙", coin.x + 5, coin.y + 28);
+            }
+        });
+
+        // Draw Player (Using Emojis based on selection)
+        ctx.font = "70px Arial";
+        let avatar = playerChar === 'girl' ? "🧕🏽" : "👦🏽";
+        ctx.fillText(avatar, player.x - 5, player.y + 65);
+
+        ctx.restore();
+    }
+
+    // --- Quiz Logic ---
+    let activeQuestion = null;
+
+    function triggerQuestion(index) {
+        if(index >= stageQuestions.length) return; // safety check
+        isPaused = true;
+        activeQuestion = stageQuestions[index];
+        
+        const modal = document.getElementById('quiz-modal');
+        const figure = stages[currentStageIndex].figure;
+        
+        document.getElementById('speaker-info').innerText = `يتحدث إليك: ${figure}`;
+        document.getElementById('question-text').innerText = activeQuestion.q;
+        document.getElementById('feedback').innerText = "";
+        document.getElementById('next-btn').style.display = 'none';
+        
+        const optsContainer = document.getElementById('options-container');
+        optsContainer.innerHTML = "";
+        
+        activeQuestion.options.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(i, btn);
+            optsContainer.appendChild(btn);
+        });
+        
+        modal.style.display = 'block';
+    }
+
+    function checkAnswer(selectedIndex, btnElement) {
+        if(document.getElementById('next-btn').style.display === 'block') return; // already answered
+        
+        const feedback = document.getElementById('feedback');
+        
+        if(selectedIndex === activeQuestion.ans) {
+            btnElement.style.backgroundColor = "#90EE90";
+            feedback.style.color = "green";
+            feedback.innerText = "إجابة صحيحة يا بطل! أحسنت صنعاً.";
+            score++;
+            document.getElementById('hud-coins').innerText = `العملات: ${score} 🪙`;
+            document.getElementById('next-btn').style.display = 'inline-block';
+        } else {
+            btnElement.style.backgroundColor = "#FFB6C1";
+            feedback.style.color = "red";
+            feedback.innerText = `حاول مرة أخرى! تلميح: ${activeQuestion.hint}`;
+            // Let them try again (no next button yet)
+        }
+    }
+
+    function closeQuiz() {
+        document.getElementById('quiz-modal').style.display = 'none';
+        isPaused = false;
+        
+        // Check if stage is complete
+        const stg = stages[currentStageIndex];
+        // In a full game, checking against total stage questions. Here we check collected coins.
+        if(coins.every(c => c.collected)) {
+            document.getElementById('hud-badge').innerText = `الوسام: ${stg.badge}`;
+            alert(`مبروك! لقد أنهيت مرحلة ${stg.name} وحصلت على الوسام ${stg.badge.split(' ')[1]}`);
+            loadStage(currentStageIndex + 1);
+        }
+    }
+
+    function showCertificate() {
+        document.getElementById('game-container').style.display = 'none';
+        const cert = document.getElementById('certificate');
+        document.getElementById('cert-name').innerText = `البطل/ة: ${playerName}`;
+        cert.style.display = 'flex';
+    }
+
+    // --- Controls Listeners ---
+    // Keyboard
+    window.addEventListener('keydown', e => {
+        if(e.code === 'ArrowRight') keys.right = true;
+        if(e.code === 'ArrowLeft') keys.left = true;
+        if(e.code === 'ArrowUp' || e.code === 'Space') keys.up = true;
+    });
+    window.addEventListener('keyup', e => {
+        if(e.code === 'ArrowRight') keys.right = false;
+        if(e.code === 'ArrowLeft') keys.left = false;
+        if(e.code === 'ArrowUp' || e.code === 'Space') keys.up = false;
+    });
+
+    // Touch/Mouse On-Screen Buttons
+    const btnR = document.getElementById('btn-right');
+    const btnL = document.getElementById('btn-left');
+    const btnJ = document.getElementById('btn-jump');
+
+    const bindControl = (btn, keyStart, keyEnd) => {
+        btn.addEventListener('mousedown', keyStart);
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); keyStart(); });
+        btn.addEventListener('mouseup', keyEnd);
+        btn.addEventListener('mouseleave', keyEnd);
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); keyEnd(); });
+    };
+
+    bindControl(btnR, () => keys.right = true, () => keys.right = false);
+    bindControl(btnL, () => keys.left = true, () => keys.left = false);
+    bindControl(btnJ, () => keys.up = true, () => keys.up = false);
+
+</script>
+</body>
+</html>
+!DOCTYPE html>
+
+<html>
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <title>Hello, World!</title>
+</head>
+<body>
+  <h1>
+    
+  </h1>
+</body>
+</html>
