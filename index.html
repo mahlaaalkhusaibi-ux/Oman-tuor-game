@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>البحث عن الكنز في بلادي - الإصدار التعليمي المطور</title>
+  <style>
+    :root{
+      --ink:#183743; --sea:#0d6c7d; --sea-dark:#084d59; --sand:#f6dfaa;
+      --cream:#fff9ec; --gold:#f6b51d; --date:#7f2834; --leaf:#417a4d;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Tajawal","Segoe UI",Tahoma,"Noto Sans Arabic","Noto Naskh Arabic",Arial,sans-serif;color:var(--ink);overflow:hidden;background:#f6dfaa;user-select:none}
+    button,input{font:inherit} button{touch-action:manipulation}
+    .app-shell{width:100vw;height:100vh;height:calc(var(--vh, 1vh) * 100);display:flex;flex-direction:column;overflow:hidden}
+    .screen{display:none;width:100%;height:100%;align-items:center;justify-content:center;padding:15px;position:absolute;inset:0}
+    .screen.active{display:flex}
+    .hidden{display:none!important}
+    button:focus-visible,input:focus-visible{outline:4px solid #32a9ba;outline-offset:3px}
+
+    /* شاشة الترحيب */
+    .welcome-screen{background:radial-gradient(circle at 80% 15%,#fffdf4 0 11%,transparent 11.3%),linear-gradient(135deg,#f7dfaa,#d8ead8 57%,#91cfdb)}
+    .welcome-panel{width:min(100%,880px);max-height:92vh;overflow-y:auto;text-align:center;background:rgba(255,250,238,.98);border:4px solid var(--gold);border-radius:28px;padding:clamp(18px,3vw,38px);box-shadow:0 18px 0 rgba(98,58,20,.16);position:relative}
+    .game-title{margin:0 0 6px;color:var(--date);font-size:clamp(1.8rem,4.5vw,3.5rem);font-weight:900;line-height:1.2;text-shadow:2px 2px #fff}
+    .subtitle{margin:0 0 20px;color:var(--sea);font-weight:800;font-size:1.1rem}
+    .form-line{max-width:560px;margin:auto;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;text-align:right}
+    label{display:block;margin-bottom:6px;font-weight:800;color:var(--ink)}
+    .name-input{width:100%;padding:12px 16px;border:2px solid #d4a04a;border-radius:14px;background:#fffdf5;outline:none;font-weight:700;font-size:1.05rem}
+    .name-input.invalid{border-color:#a52f32;box-shadow:0 0 0 4px rgba(165,47,50,.2)}
+    .name-input:focus{box-shadow:0 0 0 4px rgba(246,181,29,.28)}
+    .primary-btn{border:0;border-radius:14px;padding:12px 24px;background:var(--date);color:#fff;font-weight:900;cursor:pointer;box-shadow:0 5px 0 #4e1420;transition:.15s}
+    .primary-btn:hover{filter:brightness(1.08);transform:translateY(-2px)}
+    .primary-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #4e1420}
+    .avatar-caption{margin:20px 0 10px;font-size:1.1rem;font-weight:900;color:var(--date)}
+    .avatars{display:flex;justify-content:center;gap:16px}
+    .avatar-choice{width:150px;padding:10px;border:3px solid transparent;border-radius:20px;background:#fff7e5;cursor:pointer;transition:.2s}
+    .avatar-choice:hover{transform:translateY(-4px)}
+    .avatar-choice.selected{border-color:var(--gold);box-shadow:0 8px 18px rgba(124,78,22,.2);background:#fff1c8}
+    .avatar-icon-box{height:170px;display:grid;place-items:center}
+    .avatar-img{height:170px;width:auto;max-width:100%;object-fit:contain;pointer-events:none;-webkit-user-drag:none}
+    .avatar-choice span{display:block;padding-top:4px;font-weight:900;color:var(--date)}
+    .designer{margin:18px 0 0;color:var(--date);font-weight:900;font-size:1.05rem}
+
+    /* ساحة اللعبة */
+    #game-screen{padding:0;background:#84cddd}
+    .game-layout{width:100%;height:100%;display:flex;flex-direction:column}
+    .topbar{z-index:10;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px clamp(12px,3vw,24px);background:#fff9ec;border-bottom:4px solid var(--gold)}
+    .stage-name{font-size:clamp(0.95rem,2vw,1.3rem);font-weight:900;color:var(--date)}
+    .stats{display:flex;gap:8px;align-items:center}
+    .stat{white-space:nowrap;background:#eef4df;border:2px solid #d8dfbd;border-radius:999px;padding:4px 10px;font-weight:900;font-size:0.95rem}
+    button.stat{cursor:pointer;color:inherit}
+    .progress{height:10px;min-width:110px;flex:1;max-width:220px;border-radius:999px;overflow:hidden;background:#e8d4a1}
+    #progress-fill{height:100%;width:0;background:linear-gradient(90deg,#d98d19,#f9cf42);transition:.3s}
+
+    .world{position:relative;flex:1;overflow:hidden;isolation:isolate;background:linear-gradient(#8ed3df 0 50%,#d8c080 50% 62%,#5b5148 62%)}
+    .world[data-scene="mutrah"]{background:linear-gradient(#526d86 0 46%,#9c704e 46% 61%,#574b45 61%)}
+    .world[data-scene="salalah"]{background:linear-gradient(#b7dae0 0 46%,#75a45e 46% 61%,#4f5547 61%)}
+    .world[data-scene="musandam"]{background:linear-gradient(#83cede 0 45%,#76979a 45% 60%,#4b5253 60%)}
+    .world[data-scene="nizwa"]{background:linear-gradient(#a0d9e1 0 48%,#ddb76b 48% 61%,#675345 61%)}
+    .sun{position:absolute;top:6%;left:10%;width:55px;height:55px;border-radius:50%;background:#fff0ad;box-shadow:0 0 0 10px rgba(255,239,166,.26)}
+    .cloud{position:absolute;top:12%;right:10%;width:95px;height:26px;border-radius:999px;background:rgba(255,255,255,.75);box-shadow:38px -11px rgba(255,255,255,.75),72px 2px rgba(255,255,255,.75)}
+
+
+    .road{position:absolute;inset:auto 0 0;height:39%;overflow:hidden;background:linear-gradient(90deg,#4a423d,#655b52 48%,#49413d)}
+    .road:before,.road:after{content:"";position:absolute;top:0;height:100%;width:4px;background:rgba(255,255,255,.35)}
+    .road:before{right:33.33%}.road:after{right:66.66%}
+    .lane-lines{position:absolute;inset:0;background:repeating-linear-gradient(to bottom,transparent 0 24px,rgba(255,225,158,.8) 25px 41px,transparent 42px 74px);background-size:33.33% 100%;animation:roadMove .5s linear infinite}
+    .road.paused .lane-lines{animation-play-state:paused}
+    @keyframes roadMove{from{background-position:0 -76px}to{background-position:0 0}}
+
+    .entity{position:absolute;z-index:4;will-change:transform}
+    .coin{width:32px;height:32px;border:3px solid #fff1a0;border-radius:50%;background:radial-gradient(circle at 32% 26%,#fff9ae 0 13%,#f7c72f 14% 56%,#b46a08 58%);box-shadow:0 0 0 3px rgba(185,104,0,.35),0 0 12px rgba(255,206,45,.7);display:grid;place-items:center;color:#fff5bd;font-size:14px;font-weight:900}
+    .coin:after{content:"★"}
+    .obstacle{width:52px;height:54px;border:4px solid #5a3026;border-radius:10px 10px 3px 3px;background:#8f4d35;box-shadow:0 4px 0 rgba(0,0,0,.2);display:grid;place-items:center}
+    .obstacle:after{content:"؟";border-radius:4px;background:#e7a247;color:#63341f;width:34px;height:34px;display:grid;place-items:center;font-size:1.3rem;font-weight:900}
+
+    /* اللاعب: صورة واحدة تتحرك بين المسارات */
+    .player{position:absolute;bottom:9%;width:84px;height:150px;z-index:6;transition:left .12s ease}
+    .player .shadow{position:absolute;left:50%;bottom:-3px;width:54px;height:12px;margin-left:-27px;border-radius:50%;background:rgba(0,0,0,.32);filter:blur(1px)}
+    .stage3d{position:absolute;inset:0;display:flex;justify-content:center;align-items:flex-end}
+    .lean{position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center}
+    .rig{height:100%;display:flex;align-items:flex-end;justify-content:center}
+    .player-img{height:100%;width:auto;max-width:none;object-fit:contain;pointer-events:none;-webkit-user-drag:none;user-select:none}
+
+    /* خريطة سلطنة عُمان ومسار الرحلة */
+    .route-map{position:absolute;top:64px;left:50%;transform:translateX(-50%);width:clamp(190px,50vw,230px);z-index:2;background:rgba(255,249,236,.9);border:3px solid #d59024;border-radius:14px;padding:4px;box-shadow:0 4px 0 rgba(82,48,20,.18);pointer-events:none}
+    .route-map svg{width:100%;height:auto}
+    .mentor-map-title{margin-top:12px;text-align:center;font-weight:800;line-height:1.6;font-size:.95rem;color:#154c55}
+    .mentor-map-svg{width:min(58%,210px);margin:6px auto 0;border:3px solid #d59024;border-radius:14px;overflow:hidden}
+    .mentor-map-svg svg{width:100%;height:auto}
+
+    .speech{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:8;width:min(92%,520px);padding:8px 14px;border:3px solid #d59024;border-radius:16px;background:#fff9eb;text-align:center;font-weight:800;font-size:0.95rem;box-shadow:0 5px 0 rgba(82,48,20,.14)}
+    .controls{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;direction:ltr;gap:12px;z-index:25}
+    .control-btn{display:grid;place-items:center;width:64px;height:56px;border:3px solid #bb7726;border-radius:14px;background:#fff9e9;color:#60331f;box-shadow:0 5px 0 #8c571c;cursor:pointer;font-size:1.4rem;font-weight:900}
+    .control-btn:active{translate:0 3px;box-shadow:0 2px 0 #8c571c}
+
+    .overlay{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:15px;background:rgba(18,44,51,.75)}
+    .overlay.show{display:flex}
+    .modal{width:min(100%,620px);max-height:90vh;overflow-y:auto;border:4px solid #d19531;border-radius:24px;padding:clamp(18px,3vw,30px);background:#fff8e9;box-shadow:0 16px 0 rgba(13,42,45,.3)}
+    .modal h2{margin:0 0 10px;color:var(--date);font-size:clamp(1.3rem,2.8vw,2rem);font-weight:900}
+    .mentor-card{display:flex;gap:12px;align-items:center;padding:12px;border-radius:16px;background:#e7f0e5}
+    .mentor-icon{width:60px;height:60px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--sea);font-size:1.8rem;color:#fff}
+    .mentor-card h3{margin:0;color:#154c55;font-weight:900}
+    .mentor-card p{margin:4px 0 0;line-height:1.6;font-weight:500;font-size:0.95rem}
+    .question-meta{color:var(--sea);font-weight:900;font-size:0.9rem}
+    #question-text{margin:10px 0 16px;font-size:clamp(1.05rem,2.4vw,1.4rem);font-weight:900;line-height:1.6}
+    .answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .answer-btn{border:2px solid #d5a43d;border-radius:12px;padding:12px;background:#f4e3b4;color:#4d3021;font-weight:900;cursor:pointer;transition:.15s;font-size:1rem}
+    .answer-btn:hover{background:#f8ce68;transform:translateY(-2px)}
+    .feedback{min-height:26px;margin:10px 0;text-align:center;font-weight:900}
+    .feedback.good{color:#167047}.feedback.bad{color:#a52f32}
+    .award{text-align:center}.medal{font-size:4.5rem;line-height:1;margin:8px}
+    .certificate{text-align:center;border:10px double #b48736;background:#fff9e8}
+    .certificate-name{display:inline-block;margin:14px 0;padding:0 22px 6px;border-bottom:3px solid #bc8e37;color:#176473;font-size:clamp(1.6rem,3.5vw,2.6rem);font-weight:900}
+    .certificate-avatar{height:110px;width:auto;margin:4px auto}
+    @media(max-width:560px){
+      .form-line{grid-template-columns:1fr}.primary-btn{width:100%}
+      .avatars{gap:10px}.avatar-choice{width:130px}.avatar-icon-box{height:140px}.avatar-img{height:140px}
+      .answers{grid-template-columns:1fr}.progress{order:3;flex-basis:100%;max-width:none}
+      .speech{font-size:0.85rem;top:8px}
+    }
+
+    /* تهيئة أساسية (تعوّض ما كانت تفعله مكتبة Tailwind الخارجية) */
+    html{line-height:1.5;-webkit-text-size-adjust:100%}
+    *,::before,::after{border-width:0;border-style:solid}
+    h1,h2,h3,p{margin:0}
+    h1,h2,h3{font-size:inherit;font-weight:inherit}
+    img,svg{display:block;vertical-align:middle}
+    img{max-width:100%;height:auto}
+    button,input{color:inherit;margin:0;padding:0}
+    button{cursor:pointer}
+    button:disabled{cursor:default}
+    .mentor-card p.mentor-task{color:var(--date);font-weight:800}
+
+    /* أصناف مساعدة محلية */
+    .w-full{width:100%}
+    .mt-2{margin-top:.5rem}.mt-3{margin-top:.75rem}.mt-4{margin-top:1rem}.mb-4{margin-bottom:1rem}
+    .my-1{margin-top:.25rem;margin-bottom:.25rem}.my-2{margin-top:.5rem;margin-bottom:.5rem}
+    .text-xs{font-size:.75rem;line-height:1rem}
+    .text-sm{font-size:.875rem;line-height:1.25rem}
+    .text-lg{font-size:1.125rem;line-height:1.75rem}
+    .text-2xl{font-size:1.5rem;line-height:2rem}
+    .text-5xl{font-size:3rem;line-height:1}
+    .leading-8{line-height:2rem}
+    .font-bold{font-weight:700}.font-black{font-weight:900}
+    .text-amber-800{color:#92400e}.text-cyan-800{color:#155e75}
+    .text-gray-700{color:#374151}.text-stone-600{color:#57534e}
+  </style>
+ </head>
+ <body>
+  <div class="app-shell">
+   <main style="width:100%; height:100%; position:relative;">
+    <!-- شاشة الترحيب وتخصيص البطل -->
+    <section id="welcome-screen" class="screen welcome-screen active" aria-labelledby="game-title">
+     <div class="welcome-panel">
+      <h1 id="game-title" class="game-title">البحث عن الكنز في بلادي</h1>
+      <p class="subtitle">رحلة تعليمية ومغامرة شيقة في ربوع سلطنة عُمان</p>
+      <div class="form-line">
+       <div>
+        <label for="player-name">اسم البطل المغامر:</label> 
+        <input id="player-name" class="name-input" type="text" maxlength="20" placeholder="اكتب اسمك هنا..." autocomplete="off">
+       </div>
+       <button id="start-btn" class="primary-btn" type="button">ابدأ الرحلة 🚀</button>
+      </div>
+      <h2 class="avatar-caption">اختر شخصية البطل:</h2>
+      <div class="avatars">
+       <button class="avatar-choice selected" type="button" data-avatar="boy" aria-pressed="true">
+        <div class="avatar-icon-box"><img class="avatar-img" data-avatar-img="boy" alt="البطل المغامر"></div>
+        <span>البطل المغامر</span>
+       </button> 
+       <button class="avatar-choice" type="button" data-avatar="girl" aria-pressed="false">
+        <div class="avatar-icon-box"><img class="avatar-img" data-avatar-img="girl" alt="البطلة الذكية"></div>
+        <span>البطلة الذكية</span>
+       </button>
+      </div>
+      <p class="designer">فكرة وتصميم الأستاذة: مهلاء الخصيبية</p>
+     </div>
+    </section>
+
+    <!-- شاشة اللعب التفاعلية -->
+    <section id="game-screen" class="screen" aria-label="ساحة اللعبة">
+     <div class="game-layout">
+      <header class="topbar">
+       <div id="stage-name" class="stage-name" aria-live="polite">المرحلة الأولى: المعرفة والفهم</div>
+       <div class="stats">
+        <span class="stat">⭐ <span id="score-value">٠</span></span> 
+        <span class="stat">🪙 <span id="coin-value">٠</span></span> 
+        <span class="stat">❤️ <span id="heart-value">٣</span></span> 
+        <span class="stat">❓ <span id="question-count">٠/١٠</span></span>
+        <button id="sound-btn" class="stat" type="button" aria-label="تشغيل أو إيقاف الأصوات" aria-pressed="true">🔊</button>
+       </div>
+       <div class="progress" aria-label="تقدم الرحلة">
+        <div id="progress-fill"></div>
+       </div>
+      </header>
+      <div id="world" class="world" data-scene="musandam">
+       <div class="sun" aria-hidden="true"></div>
+       <div class="cloud" aria-hidden="true"></div>
+       <div id="route-map" class="route-map" aria-hidden="true"></div>
+       <div id="speech" class="speech" aria-live="polite">مرحباً بك يا بطل! استخدم سهمي اليمين واليسار لتغيير المسار والاصطدام بصناديق المعرفة.</div>
+       <div id="road" class="road">
+        <div class="lane-lines" aria-hidden="true"></div>
+       </div>
+       <div id="entity-layer" aria-hidden="true"></div>
+       <div id="player" class="player" role="img" aria-label="اللاعب">
+        <div class="shadow"></div>
+        <div class="stage3d"><div class="lean"><div id="rig" class="rig"></div></div></div>
+       </div>
+       <nav class="controls" aria-label="أزرار التحكم">
+        <button id="right-btn" class="control-btn" type="button" aria-label="تحرك إلى اليمين">➡️</button> 
+        <button id="left-btn" class="control-btn" type="button" aria-label="تحرك إلى اليسار">⬅️</button>
+       </nav>
+      </div>
+     </div>
+    </section>
+   </main>
+
+   <!-- نافذة المرشدين والتاريخ العماني -->
+   <div id="mentor-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="mentor-heading">
+    <section class="modal">
+     <h2 id="mentor-heading">مرشد المرحلة والشخصية التاريخية</h2>
+     <div id="mentor-content"></div>
+     <button id="mentor-next" class="primary-btn mt-4 w-full" type="button">انضم إلينا في التحدي!</button>
+    </section>
+   </div>
+
+   <!-- نافذة الأسئلة غير المتكررة -->
+   <div id="question-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="question-heading">
+    <section class="modal">
+     <p id="question-meta" class="question-meta">تحدي الطريق</p>
+     <h2 id="question-heading">سؤال مغامرة المعرفة</h2>
+     <div id="question-text">ما ناتج الحساب؟</div>
+     <div id="answer-options" class="answers"></div>
+     <p id="feedback" class="feedback" aria-live="polite"></p>
+     <button id="hint-btn" class="primary-btn hidden mt-2 w-full" type="button">إظهار التلميح 💡</button>
+    </section>
+   </div>
+
+   <!-- نافذة الأوسمة والجوائز -->
+   <div id="award-overlay" class="overlay" role="dialog" aria-modal="true">
+    <section class="modal award">
+     <div id="medal" class="medal">🥉</div>
+     <h2 id="award-title">وسام الإنجاز</h2>
+     <p id="award-text" class="font-bold text-lg leading-8 my-2"></p>
+     <button id="award-next" class="primary-btn mt-4 w-full" type="button">تابع إلى المرحلة التالية ➡️</button>
+    </section>
+   </div>
+
+   <!-- نافذة خسارة اللعبة -->
+   <div id="gameover-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="gameover-title">
+    <section class="modal award">
+     <div class="medal">💔</div>
+     <h2 id="gameover-title">انتهت القلوب!</h2>
+     <p id="gameover-text" class="font-bold text-lg leading-8 my-2"></p>
+     <button id="gameover-restart" class="primary-btn mt-4 w-full" type="button">العودة إلى البداية 🔄</button>
+    </section>
+   </div>
+
+   <!-- نافذة الشهادة النهائية الختامية -->
+   <div id="certificate-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="certificate-title">
+    <section class="modal certificate">
+     <div class="text-5xl my-2">🏆</div>
+     <p class="font-bold text-amber-800">شهادة تقدير وإنجاز رسمية</p>
+     <h2 id="certificate-title" class="text-2xl font-black text-cyan-800 my-1">بطل دروب عُمان الأسطوري</h2>
+     <img id="certificate-avatar" class="certificate-avatar" alt="">
+     <p class="text-gray-700 text-sm">تمنح هذه الشهادة بكل فخر واعتزاز إلى البطل:</p>
+     <div id="certificate-name" class="certificate-name"></div>
+     <p class="font-bold text-xs text-stone-600 mb-4">لاجتيازك مراحل الكنز ومعالم الوطن الأربعة وحصولك على الوسام البلاتيني الفاخر.</p>
+     <button id="play-again" class="primary-btn w-full" type="button">العب من جديد 🔄</button>
+    </section>
+   </div>
+  </div>
+
+  <script>
+    // صور الشخصيات (مدمجة داخل الملف)
+    const AVATAR_SRC = {
+      boy: "data:image/webp;base64,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",
+      girl: "data:image/webp;base64,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"
+    };
+
+    // عرض صورة اللاعب المختار كصورة واحدة تتحرك بين المسارات
+    function buildRig(kind){
+      const rigEl = document.getElementById("rig");
+      rigEl.replaceChildren();
+      const img = document.createElement("img");
+      img.className = "player-img";
+      img.alt = "";
+      img.src = AVATAR_SRC[kind];
+      rigEl.appendChild(img);
+    }
+
+    const stages = [
+      {
+        name: "المرحلة الأولى: المعرفة والفهم",
+        scene: "musandam",
+        questions: 10,
+        medal: "🥉",
+        award: "الوسام البرونزي",
+        mentor: [
+          "أحمد بن ماجد",
+          "⛵",
+          "أهلاً بك في مياه مسندم الهادئة. أنا الملاح العماني أحمد بن ماجد، رائد الملاحة البحرية. اجمع العملات بذكاء، وانتبه للحواجز التعليمية التي تنتظرك في طريق المعرفة!"
+        ]
+      },
+      {
+        name: "المرحلة الثانية: التطبيق",
+        scene: "mutrah",
+        questions: 7,
+        medal: "🥈",
+        award: "الوسام الفضي",
+        mentor: [
+          "الإمام ناصر بن مرشد",
+          "🏰",
+          "أهلاً بك في أسواق مطرح العريقة. أنا الإمام ناصر بن مرشد، مؤسس دولة اليعاربة وموحد البلاد. السرعة مهمة، لكن التطبيق العملي وحل مشكلات الحياة اليومية هو مفتاح فوزك."
+        ]
+      },
+      {
+        name: "المرحلة الثالثة: الاستدلال",
+        scene: "nizwa",
+        questions: 5,
+        medal: "🥇",
+        award: "الوسام الذهبي",
+        mentor: [
+          "الإمام أحمد بن سعيد",
+          "🛡️",
+          "قلعة نزوى الشامخة تحييك. أنا الإمام أحمد بن سعيد البوسعيدي، مؤسس الدولة البوسعيدية وباني أمجادها. الاستدلال وتحليل الأنماط يتطلب عقلاً ذكياً مثلك يا بطل."
+        ]
+      },
+      {
+        name: "المرحلة الرابعة: القدرات العليا",
+        scene: "salalah",
+        questions: 5,
+        medal: "🏆",
+        award: "الوسام البلاتيني الفاخر",
+        mentor: [
+          "عائشة الريامية وشمساء الخليلية",
+          "📚",
+          "لقد وصلت إلى ختام الرحلة الخضراء في ظفار صلالة. نحن الباحثتان والعالمتان عائشة الريامية وشمساء الخليلية؛ أظهر مهاراتك الفائقة في حل الألغاز واجتياز القدرات العليا!"
+        ]
+      }
+    ];
+
+    // بنك الأسئلة مقسم ومنظم للمراحل الأربع بدقة تامة (بدون تكرار)
+    const stageQuestions = [
+      // المرحلة الأولى: المعرفة والفهم (10 أسئلة)
+      [
+        ["ما ناتج جمع ٨ + ٦؟", ["١٤", "١٣", "١٥", "١٢"], "١٤", "ابدأ من الرقم ٨ وعد تصاعدياً ست خطوات."],
+        ["ما العدد الذي يأتي مباشرة بعد العدد ٤٩؟", ["٥٠", "٤٨", "٥٩", "٤٠"], "٥٠", "أضف واحداً إلى منزلة الآحاد في العدد ٤٩."],
+        ["ما ناتج طرح ١٩ − ٧؟", ["١٢", "١٣", "١١", "١٦"], "١٢", "اطرح سبعة من تسعة عشر بروية."],
+        ["أكمل العد بالقفز اثنين: ٢، ٤، ٦، __", ["٨", "٧", "٩", "١٠"], "٨", "أضف ٢ إلى العدد الأخير ٦."],
+        ["في العدد ٦٤، ما هو رقم الآحاد؟", ["٤", "٦", "٦٠", "١٠"], "٤", "منزلة الآحاد هي الرقم الموجود في اليمين."],
+        ["أكمل النمط الرياضي: ١٠، ٢٠، ٣٠، __", ["٤٠", "٣٥", "٥٠", "٢٥"], "٤٠", "النمط يزيد بمقدار عشرة في كل خطوة."],
+        ["ما هو العدد الأكبر بين الأعداد التالية؟", ["٤٧", "٤٠", "٣٧", "٢٧"], "٤٧", "قارن منزلة العشرات أولاً لكل الأعداد."],
+        ["ما ناتج جمع ٥ + ٥ + ٥؟", ["١٥", "١٠", "٢٠", "١٢"], "١٥", "كرر جمع العدد خمسة ثلاث مرات."],
+        ["أي الأعداد التالية يمثل عدداً زوجياً؟", ["١٤", "١٥", "١٧", "١٩"], "١٤", "الأعداد الزوجية تبدأ بـ ٠ أو ٢ أو ٤ أو ٦ أو ٨."],
+        ["ما ناتج طرح ١٠ من العدد ٥٥؟", ["٤٥", "٥٠", "٤٠", "٣٥"], "٤٥", "اطرح عشرة من منزلة العشرات."]
+      ],
+      // المرحلة الثانية: التطبيق في مواقف حياتية (7 أسئلة)
+      [
+        ["لدى سالم ١٤ عملة ثم جمع ٥ عملات إضافية. كم أصبح لديه؟", ["١٩", "٢٠", "١٨", "٩"], "١٩", "اجمع العدد ١٤ مع العدد ٥."],
+        ["مع مريم ٣٠ ريالاً، أنفقت منها ٨ ريالات للشراء من السوق. كم بقي معها؟", ["٢٢", "٣٨", "٢٨", "٢١"], "٢٢", "اطرح ٨ ريالات من المبلغ الإجمالي ٣٠."],
+        ["في حافلة رحلات مدرسية ٣٥ راكباً، نزل منهم ١٢ راكباً في المحطة الأولى. كم راكباً بقي في الحافلة؟", ["٢٣", "٢٥", "٢٢", "٢٧"], "٢٣", "اطرح عدد النازلين من إجمالي الركاب."],
+        ["زرع أحمد ١٥ فسيلة نخل، ثم زرع ١٥ فسيلة أخرى في اليوم التالي. كم إجمالي الفسائل المزروعة؟", ["٣٠", "٢٥", "٣٥", "٢٠"], "٣٠", "اجمع 15 مع 15."],
+        ["اشترت فاطمة قميصاً بـ ٢٥ ريالاً وحذاءً بـ ١٥ ريالاً. ما إجمالي ما دفعته؟", ["٤٠", "٣٥", "٤٥", "٣٠"], "٤٠", "اجمع ثمن القميص وثمن الحذاء."],
+        ["مع راشد ٥٠ طابع بريد، أهداه صديقه ١٠ طوابع إضافية، ثم أعطى أخاه ٢٠ طابعاً. كم طابعاً بقي معه؟", ["٤٠", "٣٠", "٥٠", "٦٠"], "٤٠", "أضف الطوابع المكتسبة ثم اطرح المهداة."],
+        ["توقف القطار في المحطة فصعد ٣٢ شخصاً، ثم صعد ١٤ شخصاً آخرين. كم عدد الصاعدين إجمالاً؟", ["٤٦", "٤٤", "٤٨", "٤٢"], "٤٦", "اجمع العددين معاً."]
+      ],
+      // المرحلة الثالثة: الاستدلال وتحليل الأنماط (5 أسئلة)
+      [
+        ["في قلعة نزوى ٦ غرف، في كل غرفة ٣ نوافذ. كم إجمالي النوافذ؟", ["١٨", "٩", "١٢", "٢١"], "١٨", "كرر جمع العدد ٣ ست مرات متتالية."],
+        ["إذا كان النمط يزيد بمقدار ٥ في كل مرة: ٥، ١٠، ١٥، ٢٠، __. ما العدد التالي؟", ["٢٥", "٣٠", "٢٢", "٢٤"], "٢٥", "أضف خمسة إلى آخر عدد في النمط."],
+        ["لدي أربع أوراق من فئة ٥ ريالات، وورقتان من فئة ١٠ ريالات. كم المبلغ الكلي؟", ["٤٠", "٣٥", "٥٠", "٣٠"], "٤٠", "احسب قيمة أوراق فئة ٥ (٢٠) وقيمة أوراق فئة ١٠ (٢٠) واجمعهما."],
+        ["إذا كان مجموع عددين هو ٢٠، وأحدهما هو ٨، فما هو العدد الآخر؟", ["١٢", "١٠", "١٤", "١٥"], "١٢", "اطرح ٨ من العدد الكلي ٢٠."],
+        ["رتب الأعداد التالية تصاعدياً: ٢٣، ١٥، ٤٢، ٣١. ما هو العدد الأول في الترتيب؟", ["١٥", "٢٣", "٣١", "٤٢"], "١٥", "ابحث عن أصغر عدد بين الخيارات."]
+      ],
+      // المرحلة الرابعة: القدرات العليا والألغاز الرياضية (5 أسئلة)
+      [
+        ["أنا عدد، إذا أضفت إلي نصف نفسي وأضفت ٣ أصبحت النتيجة ١٥. فمن أنا؟", ["٨", "١٠", "٦", "١٢"], "٨", "فكر في عدد يقبل القسمة على ٢، فليكن ٨ (نصفه ٤) و٨+٤+٣ = ١٥."],
+        ["إذا كان عمر الأب ٣٥ عاماً، وعمر الابن ١٠ أعوام، فكم سيكون مجموع عمريهما بعد ٥ سنوات؟", ["٥٥", "٥٠", "٦٠", "٤٥"], "٥٥", "أضف 5 سنوات لعمر الأب (40) وعمر الابن (15) ثم اجمعهما."],
+        ["ما هو العدد الذي إذا ضربته في نفسه ثم أضفت إليه ٥ كان الناتج ٣٠؟", ["٥", "٦", "٤", "٧"], "٥", "العدد الذي مربعه 25 هو 5، و25 + 5 = 30."],
+        ["قطة صعدت شجرة ارتفاعها ١٢ متراً، تصعد في النهار ٣ أمتار وتنزلق ليلاً مترين. في أي يوم تصل لقمة الشجرة؟", ["اليوم العاشر", "اليوم التاسع", "اليوم الثامن", "اليوم السابع"], "اليوم العاشر", "حساب تراكمي للصافي اليومي (1 متر) مع مراعاة قفزة النهار."],
+        ["مع مزارع سلال من التفاح، إذا كان مجموع التفاح في سلتين يساوي ٥٠، وفي السلة الأولى يفوق الثانية بـ ١٠ تفاحات. كم تفاحة في السلة الأولى؟", ["٣٠", "٢٥", "٣٥", "٢٠"], "٣٠", "الفرق 10 والباقي يوزع بالتساوي (20 لكل سلة) ونضيف الـ 10 للسلة الأولى."]
+      ]
+    ];
+
+
+    // أسئلة إضافية متنوعة لكل مرحلة (تُدمج مع البنك الأساسي لتقليل التكرار)
+    const extraQuestions = [
+      // المرحلة الأولى: عد تصاعدي/تنازلي، عد بالقفز، جمع، قيمة مكانية
+      [
+        ["أكمل العد التنازلي: ٩، ٨، ٧، __", ["٦", "٥", "٧", "١٠"], "٦", "في العد التنازلي ننقص واحداً في كل خطوة."],
+        ["أكمل العد التنازلي: ٢٠، ١٩، ١٨، __", ["١٧", "١٦", "٢١", "١٥"], "١٧", "اطرح ١ من العدد الأخير ١٨."],
+        ["أكمل العد بالقفز خمسة: ٥، ١٠، ١٥، __", ["٢٠", "١٨", "٢٥", "١٦"], "٢٠", "أضف ٥ إلى العدد الأخير ١٥."],
+        ["أكمل العد بالقفز عشرة: ٣٠، ٤٠، ٥٠، __", ["٦٠", "٥٥", "٧٠", "٥١"], "٦٠", "أضف ١٠ إلى العدد ٥٠."],
+        ["ما ناتج جمع ٧ + ٩؟", ["١٦", "١٥", "١٧", "١٤"], "١٦", "ابدأ من ٩ وعد سبع خطوات إلى الأمام."],
+        ["في العدد ٨٣، ما قيمة الرقم ٨؟", ["٨٠", "٨", "٣٠", "٣"], "٨٠", "الرقم ٨ يقع في منزلة العشرات، أي ٨ عشرات."],
+        ["ما العدد المكوّن من ٤ عشرات و٢ آحاد؟", ["٤٢", "٢٤", "٤٠", "٦٢"], "٤٢", "٤ عشرات = ٤٠، ثم أضف ٢."],
+        ["ما العدد الذي يأتي قبل العدد ٧٠ مباشرة؟", ["٦٩", "٧١", "٦٠", "٦٨"], "٦٩", "اطرح واحداً من العدد ٧٠."],
+        ["ما ناتج جمع ٢٥ + ١٠؟", ["٣٥", "٢٦", "٤٥", "٣٠"], "٣٥", "أضف عشرة واحدة إلى منزلة العشرات."],
+        ["أي الأعداد التالية هو الأصغر؟", ["٥٠", "٥٩", "٦٩", "٩٥"], "٥٠", "قارن العشرات أولاً، ثم الآحاد."]
+      ],
+      // المرحلة الثانية: تطبيق في مواقف حياتية
+      [
+        ["كان مع خالد ٢٣ قلماً، أعطى صديقه ٦ أقلام. كم قلماً بقي معه؟", ["١٧", "٢٩", "١٦", "١٨"], "١٧", "اطرح ٦ من ٢٣."],
+        ["في مزرعة ١٨ نخلة، وغُرست ١١ نخلة جديدة. كم نخلة صارت في المزرعة؟", ["٢٩", "٧", "٢٧", "٣٩"], "٢٩", "اجمع ١٨ مع ١١."],
+        ["في مكتبة المدرسة ٤٥ كتاباً، وُضع ٢٠ منها على الرف الأول والباقي على الرف الثاني. كم كتاباً على الرف الثاني؟", ["٢٥", "٢٠", "٦٥", "٣٥"], "٢٥", "اطرح ٢٠ من ٤٥."],
+        ["مع سعيد ٤ أوراق نقدية من فئة ١٠ ريالات. كم ريالاً معه؟", ["٤٠", "١٤", "٣٠", "٥٠"], "٤٠", "عُدّ بالقفز عشرة أربع مرات: ١٠، ٢٠، ٣٠، ..."],
+        ["مع ليلى ٣ حزم، في كل حزمة ١٠ أقلام، ومعها ٥ أقلام منفردة. كم قلماً معها؟", ["٣٥", "٣٨", "٥٣", "٨"], "٣٥", "٣ عشرات = ٣٠، ثم أضف ٥."],
+        ["ركب ٢٧ سائحاً قارباً في مسندم، ثم ركب ١٣ سائحاً آخرين. كم سائحاً في القارب؟", ["٤٠", "٣٤", "٤٤", "٣٠"], "٤٠", "اجمع ٢٧ مع ١٣."],
+        ["في سوق مطرح ٦٠ كيساً من البخور، بيع منها ٢٥ كيساً. كم كيساً بقي؟", ["٣٥", "٤٥", "٣٠", "٨٥"], "٣٥", "اطرح ٢٥ من ٦٠."],
+        ["اصطاد حمد ٣٤ سمكة في الشبكة الأولى و٢١ سمكة في الثانية. كم سمكة اصطاد؟", ["٥٥", "٥٣", "٤٥", "١٣"], "٥٥", "اجمع العشرات معاً ثم الآحاد معاً."]
+      ],
+      // المرحلة الثالثة: استدلال وأنماط
+      [
+        ["أكمل النمط: ٥٠، ٤٥، ٤٠، ٣٥، __", ["٣٠", "٢٥", "٣٢", "٤٠"], "٣٠", "النمط ينقص ٥ في كل خطوة."],
+        ["عدد مكوّن من ٦ عشرات و٧ آحاد. إذا أضفنا إليه ٢٣ فكم يصبح؟", ["٩٠", "٨٠", "٩٧", "٨٣"], "٩٠", "العدد ٦٧، ثم أضف ٢٣: ٦٧ + ٢٣."],
+        ["مع سالم أكثر من راشد بـ ٦ طوابع. إذا كان مع راشد ٢٤ طابعاً فكم طابعاً مع سالم؟", ["٣٠", "١٨", "٢٦", "٣٤"], "٣٠", "اجمع ٢٤ مع ٦."],
+        ["أكمل النمط: ٣، ٦، ٩، ١٢، __", ["١٥", "١٤", "١٦", "١٨"], "١٥", "النمط يزيد ٣ في كل خطوة."],
+        ["في النمط: ١٠٠، ٩٠، ٨٠، ٧٠ ما قاعدة النمط؟", ["نطرح ١٠", "نضيف ١٠", "نطرح ٥", "نضيف ٥"], "نطرح ١٠", "الأعداد تصغر، فالعملية طرح، والفرق بين كل عددين ١٠."],
+        ["عدد إذا أضفنا إليه ١٥ أصبح ٣٢. ما هذا العدد؟", ["١٧", "٤٧", "١٨", "٢٧"], "١٧", "اطرح ١٥ من ٣٢."],
+        ["ما أكبر عدد يمكن تكوينه من الرقمين ٣ و٧؟", ["٧٣", "٣٧", "١٠", "٧٠"], "٧٣", "ضع الرقم الأكبر في منزلة العشرات."],
+        ["رتب الأعداد من الأكبر إلى الأصغر: ٣٨، ٨٣، ٣٣، ٨٠. ما العدد الأول؟", ["٨٣", "٣٨", "٨٠", "٣٣"], "٨٣", "ابحث عن أكبر عدد؛ قارن العشرات أولاً."]
+      ],
+      // المرحلة الرابعة: ألغاز رياضية وقدرات عليا
+      [
+        ["فكرت في عدد وطرحت منه ٧ فصار ١٨. ما العدد الذي فكرت فيه؟", ["٢٥", "١١", "٢٢", "٣٥"], "٢٥", "اعمل بالعكس: اجمع ١٨ مع ٧."],
+        ["عدد من رقمين، مجموع رقميه ٩، ورقم آحاده ٤. ما هو؟", ["٥٤", "٤٥", "٣٦", "٦٣"], "٥٤", "إذا كان الآحاد ٤ فالعشرات ٩ − ٤ = ٥."],
+        ["ضفدع يقفز ٣ خطوات إلى الأمام وخطوتين للخلف في كل مرة. كم خطوة يتقدم بعد ٤ مرات؟", ["٤", "٥", "٦", "١٢"], "٤", "في كل مرة يتقدم خطوة واحدة صافية."],
+        ["ثلاثة أعداد متتالية مجموعها ٢٤. ما أكبرها؟", ["٩", "٨", "٧", "١٠"], "٩", "جرّب ٧ و٨ و٩ ثم اجمعها."],
+        ["مع أحمد ضعف ما مع سالم. إذا كان مع سالم ١٢ ريالاً، فكم ريالاً معهما معاً؟", ["٣٦", "٢٤", "٤٨", "٣٠"], "٣٦", "مع أحمد ٢٤ ريالاً (١٢ + ١٢)، ثم اجمع مع ١٢."],
+        ["عدد أضفنا إليه ١٠ ثم طرحنا منه ٤ فصار ٢٦. ما العدد؟", ["٢٠", "٢٤", "١٦", "٣٢"], "٢٠", "الناتج ٢٦ جاء بعد زيادة صافية ٦، فاطرح ٦ من ٢٦."],
+        ["كم عدداً زوجياً من ١ إلى ١٠؟", ["٥", "٤", "٦", "٣"], "٥", "الأعداد الزوجية هي ٢، ٤، ٦، ٨، ١٠."],
+        ["عددان مجموعهما ١٠ والفرق بينهما ٤. ما العدد الأكبر؟", ["٧", "٦", "٨", "٥"], "٧", "جرّب ٧ و٣: مجموعهما ١٠ وفرقهما ٤."]
+      ]
+    ];
+    stageQuestions.forEach((list, i) => list.push(...extraQuestions[i]));
+
+    const moreQuestions = [
+      [
+        ["أكمل العد التصاعدي: ٣٦، ٣٧، ٣٨، __", ["٣٩", "٤٠", "٣٥", "٣٧"], "٣٩", "أضف واحداً إلى العدد الأخير ٣٨."],
+        ["أكمل العد التنازلي: ٥٠، ٤٩، ٤٨، __", ["٤٧", "٤٦", "٥١", "٤٠"], "٤٧", "اطرح واحداً من العدد ٤٨."],
+        ["ما ناتج جمع ٩ + ٩؟", ["١٨", "١٧", "١٩", "١٦"], "١٨", "ضاعف العدد ٩، أو أضف ١٠ ثم اطرح ١."],
+        ["في العدد ٧٥، ما هو رقم العشرات؟", ["٧", "٥", "٧٠", "٥٠"], "٧", "منزلة العشرات هي الرقم الذي على يسار الآحاد."]
+      ],
+      [
+        ["كان مع ريم ٤٠ ريالاً، واشترت هدية بـ ١٥ ريالاً. كم ريالاً بقي معها؟", ["٢٥", "٥٥", "٣٥", "٢٠"], "٢٥", "اطرح ١٥ من ٤٠."],
+        ["زار قلعة نزوى ٣٢ زائراً صباحاً و٢٨ زائراً مساءً. كم زائراً زارها في اليوم؟", ["٦٠", "٥٠", "٥٦", "٤"], "٦٠", "اجمع ٣٢ مع ٢٨."],
+        ["مع أمينة ٥٠ تمرة، وضعت منها ٣ أكياس في كل كيس ١٠ تمرات. كم تمرة بقيت بلا كيس؟", ["٢٠", "٣٠", "١٠", "٥٠"], "٢٠", "٣ أكياس = ٣٠ تمرة، ثم اطرح ٣٠ من ٥٠."],
+        ["قطع عامر ٢٤ كيلومتراً بدراجته صباحاً و١٦ كيلومتراً بعد الظهر. كم كيلومتراً قطع؟", ["٤٠", "٣٨", "٣٠", "٨"], "٤٠", "اجمع ٢٤ مع ١٦."]
+      ],
+      [
+        ["أكمل النمط: ٢، ٥، ٨، ١١، __", ["١٤", "١٣", "١٥", "١٦"], "١٤", "النمط يزيد ٣ في كل خطوة."],
+        ["ما العدد الذي يزيد ١٠ على العدد ٤٧؟", ["٥٧", "٤٨", "٣٧", "٦٧"], "٥٧", "أضف عشرة واحدة إلى ٤٧."],
+        ["ما العدد الذي نضيفه إلى ٢٥ ليصبح ٤٠؟", ["١٥", "٢٥", "٦٥", "١٠"], "١٥", "اطرح ٢٥ من ٤٠."],
+        ["ثلاثة أعداد متساوية مجموعها ١٥. ما قيمة كل عدد؟", ["٥", "٣", "٧", "١٠"], "٥", "أي عدد إذا جمعناه ثلاث مرات يعطي ١٥؟"],
+        ["إذا بدّلنا موضع رقمي العدد ٩٢ نحصل على عدد آخر. ما هو؟", ["٢٩", "٩٢", "١١", "٢٠"], "٢٩", "ضع الآحاد مكان العشرات والعكس."]
+      ],
+      [
+        ["أعطت منى ٩ كرات لأختها فبقي معها ١٤ كرة. كم كرة كان معها في البداية؟", ["٢٣", "٥", "٢٥", "٢١"], "٢٣", "اعمل بالعكس: اجمع ١٤ مع ٩."],
+        ["عدد من رقمين، رقم عشراته ضعف رقم آحاده، ومجموع رقميه ٩. ما هو؟", ["٦٣", "٣٦", "٤٥", "٧٢"], "٦٣", "جرّب ٦ و٣: ٦ ضعف ٣ ومجموعهما ٩."],
+        ["في سباق، جاء سالم خامساً من الأمام، وخلفه ٤ متسابقين. كم متسابقاً في السباق؟", ["٩", "٨", "١٠", "٧"], "٩", "٤ أمامه + هو + ٤ خلفه."],
+        ["في سلة ٢٠ برتقالة. أخذ علي نصفها ثم أضاف إليها ٥ برتقالات. كم برتقالة معه؟", ["١٥", "١٠", "٢٥", "٥"], "١٥", "نصف ٢٠ هو ١٠، ثم أضف ٥."],
+        ["ما مجموع الأعداد من ١ إلى ٥؟", ["١٥", "١٠", "٢٠", "١٢"], "١٥", "جمّع الأعداد في أزواج: ١ + ٤ و٢ + ٣ ثم ٥."]
+      ]
+    ];
+    stageQuestions.forEach((list, i) => list.push(...moreQuestions[i]));
+
+    // اختيار العدد المطلوب من الأسئلة لكل مرحلة عشوائياً من البنك، بدون أي تكرار داخل المرحلة
+    let stageQuestionSet = [];
+    function buildQuestionOrder(){
+      stageQuestionSet = randomShuffle(stageQuestions[stageIndex]).slice(0, stages[stageIndex].questions);
+    }
+    function getCurrentQuestion(){
+      return stageQuestionSet[currentStageQuestionIndex];
+    }
+
+    // ===== الأصوات (مولَّدة برمجياً داخل الملف، بدون أي ملفات خارجية) =====
+    let audioCtx = null;
+    let soundOn = true;
+    let noiseBuffer = null;
+
+    function ensureAudio(){
+      if(!audioCtx){
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if(!AC) return null;
+        audioCtx = new AC();
+      }
+      if(audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    }
+
+    // نغمة موسيقية واحدة
+    function tone(freq, start, dur, type = "sine", vol = 0.25, endFreq){
+      if(!soundOn) return;
+      const ctx = ensureAudio(); if(!ctx) return;
+      const t0 = ctx.currentTime + start;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      if(endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, t0 + dur);
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.05);
+    }
+
+    // نقرة تصفيق قصيرة (ضجيج مُرشَّح)
+    function clap(start, dur, vol, freq){
+      if(!soundOn) return;
+      const ctx = ensureAudio(); if(!ctx) return;
+      if(!noiseBuffer){
+        noiseBuffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+        const data = noiseBuffer.getChannelData(0);
+        for(let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+      }
+      const t0 = ctx.currentTime + start;
+      const src = ctx.createBufferSource();
+      src.buffer = noiseBuffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.value = freq;
+      filter.Q.value = 0.9;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      src.connect(filter).connect(gain).connect(ctx.destination);
+      src.start(t0, Math.random() * 0.5);
+      src.stop(t0 + dur + 0.02);
+    }
+
+    const sfx = {
+      // عملة ذهبية: نغمتان سريعتان لامعتان
+      coin(){ tone(988, 0, 0.09, "square", 0.11); tone(1319, 0.08, 0.25, "square", 0.11); },
+      // الاصطدام بصندوق المعرفة
+      box(){ tone(330, 0, 0.14, "triangle", 0.28, 560); },
+      // إجابة صحيحة
+      correct(){ [523, 659, 784].forEach((f, i) => tone(f, i * 0.09, 0.2, "triangle", 0.26)); tone(1047, 0.28, 0.4, "triangle", 0.26); },
+      // إجابة خاطئة: صوت هابط منخفض
+      wrong(){ tone(230, 0, 0.22, "sawtooth", 0.2, 150); tone(170, 0.2, 0.42, "sawtooth", 0.2, 90); },
+      // خسارة اللعبة
+      gameOver(){ [392, 349, 311, 262].forEach((f, i) => tone(f, i * 0.28, 0.4, "triangle", 0.3)); },
+      // تصفيق حار
+      applause(seconds = 2.4){
+        for(let i = 0; i < seconds * 40; i++){
+          const t = Math.random() * seconds;
+          const fade = 1 - (t / seconds) * 0.75;
+          clap(t, 0.03 + Math.random() * 0.04, 0.3 * fade * (0.4 + Math.random() * 0.6), 1200 + Math.random() * 3000);
+        }
+      },
+      // فوزٌ بالمرحلة: نغمات احتفال + تصفيق
+      win(){
+        [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.13, 0.28, "square", 0.13));
+        tone(1047, 0.55, 0.6, "square", 0.13); tone(784, 0.55, 0.6, "square", 0.09);
+        this.applause(2.6);
+      },
+      // الفوز الكبير بالشهادة: احتفال أطول
+      victory(){
+        [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, i * 0.15, 0.32, "square", 0.13));
+        tone(1319, 1.1, 0.9, "square", 0.13); tone(1047, 1.1, 0.9, "square", 0.09); tone(784, 1.1, 0.9, "square", 0.07);
+        this.applause(4.5);
+      }
+    };
+
+    // ===== خريطة سلطنة عُمان ومسار الرحلة =====
+    const proj = (lon, lat) => [(lon - 51.8) * 35.3, (26.6 - lat) * 38];
+    const OMAN_MAIN = [[53.1,16.65],[54.1,17.0],[54.7,16.95],[55.4,17.4],[55.9,17.9],[56.6,18.5],[57.4,18.9],[57.8,19.0],[57.7,19.7],[58.2,20.3],[58.7,20.5],[58.9,21.0],[59.4,21.9],[59.8,22.5],[59.5,22.6],[59.0,23.3],[58.6,23.65],[58.0,23.75],[57.3,24.0],[56.7,24.45],[56.4,24.9],[56.05,24.4],[55.8,24.2],[55.4,23.2],[55.2,22.7],[55.7,22.0],[55.0,20.0],[52.0,19.0],[52.2,18.0]];
+    const OMAN_MUSANDAM = [[56.0,25.85],[56.2,26.35],[56.5,26.2],[56.45,25.75],[56.2,25.6]];
+    const CITY = {
+      // a: جهة امتداد النص عن النقطة (start = يمتد يميناً، end = يمتد يساراً)
+      MUS: { p: [56.25, 26.2], n: "شواطئ مسندم",           dx: 10,  dy: 5,  a: "start" },
+      SOH: { p: [56.7, 24.36], n: "قلعة صحار",              dx: 10,  dy: 5,  a: "start" },
+      MUT: { p: [58.57, 23.62], n: "سوق مطرح",              dx: -10, dy: 5,  a: "end" },
+      RAH: { p: [59.8, 22.52], n: "رأس الحد (صور)",         dx: 8,   dy: 24, a: "end" },
+      NIZ: { p: [57.53, 22.93], n: "قلعة نزوى",             dx: -10, dy: 5,  a: "end" },
+      SAL: { p: [54.1, 17.0],  n: "صلالة - أرض اللبان",     dx: 10,  dy: 5,  a: "start" }
+    };
+    const STAGE_ROUTES = [["MUS", "SOH"], ["SOH", "MUT", "RAH"], ["RAH", "NIZ"], ["NIZ", "SAL"]];
+    const STAGE_ROUTE_TEXT = [
+      "من شواطئ مسندم إلى قلعة صحار",
+      "من قلعة صحار إلى سوق مطرح ثم إلى محمية السلاحف برأس الحد في ولاية صور",
+      "من صور إلى قلعة نزوى",
+      "من نزوى إلى صلالة أرض اللبان"
+    ];
+    const cityXY = k => proj(CITY[k].p[0], CITY[k].p[1]);
+    const cumLen = pts => { const L = [0]; for(let i = 1; i < pts.length; i++) L.push(L[i-1] + Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1])); return L; };
+    function pointAt(pts, t){
+      const L = cumLen(pts), T = L[L.length - 1] * t;
+      for(let i = 1; i < pts.length; i++){
+        if(T <= L[i] || i === pts.length - 1){
+          const u = Math.min(1, (T - L[i-1]) / (L[i] - L[i-1] || 1));
+          return { x: pts[i-1][0] + (pts[i][0]-pts[i-1][0]) * u, y: pts[i-1][1] + (pts[i][1]-pts[i-1][1]) * u, upto: i };
+        }
+      }
+    }
+    // يبني رسم الخريطة (نصوص ثابتة داخل الكود وأرقام فقط)
+    function mapSVG(stage, frac, labels){
+      const k = labels ? 1 : 1.8;
+      const path = pts => pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+      const outline = pts => path(pts.map(p => proj(p[0], p[1]))) + "Z";
+      let s = `<svg viewBox="0 0 300 395" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="395" fill="#cfeaf0"/>`;
+      s += `<path d="${outline(OMAN_MAIN)}" fill="#f6dfaa" stroke="#b07a2a" stroke-width="${2.5*k}" stroke-linejoin="round"/>`;
+      s += `<path d="${outline(OMAN_MUSANDAM)}" fill="#f6dfaa" stroke="#b07a2a" stroke-width="${2.5*k}" stroke-linejoin="round"/>`;
+      if(labels){
+        s += `<text x="258" y="66" text-anchor="middle" font-size="11" fill="#4a8fa0" font-family="Tajawal,Tahoma,sans-serif">خليج عُمان</text>`;
+        s += `<text x="246" y="268" text-anchor="middle" font-size="12" fill="#4a8fa0" font-family="Tajawal,Tahoma,sans-serif">بحر العرب</text>`;
+      }
+      const reached = new Set();
+      STAGE_ROUTES.forEach((keys, si) => {
+        const pts = keys.map(cityXY), L = cumLen(pts);
+        keys.forEach((key, i) => { if(si < stage || (si === stage && L[i] / L[L.length-1] <= frac + 1e-6)) reached.add(key); });
+        if(si < stage){
+          s += `<path d="${path(pts)}" fill="none" stroke="#417a4d" stroke-width="${4.5*k}" stroke-linecap="round" stroke-linejoin="round"/>`;
+        } else {
+          s += `<path d="${path(pts)}" fill="none" stroke="#7f2834" stroke-opacity="${si === stage ? .85 : .4}" stroke-width="${3.5*k}" stroke-dasharray="${7*k} ${6*k}" stroke-linecap="round" stroke-linejoin="round"/>`;
+          if(si === stage && frac > 0){
+            const pos = pointAt(pts, frac);
+            s += `<path d="${path(pts.slice(0, pos.upto).concat([[pos.x, pos.y]]))}" fill="none" stroke="#417a4d" stroke-width="${4.5*k}" stroke-linecap="round" stroke-linejoin="round"/>`;
+          }
+        }
+      });
+      Object.keys(CITY).forEach(key => {
+        const [x, y] = cityXY(key);
+        s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${6*k}" fill="${reached.has(key) ? "#f6b51d" : "#fff"}" stroke="#7f2834" stroke-width="${2.5*k}"/>`;
+        if(labels) s += `<text x="${(x + CITY[key].dx).toFixed(1)}" y="${(y + CITY[key].dy).toFixed(1)}" text-anchor="${CITY[key].a === "start" ? "end" : "start"}" font-size="14" font-weight="800" fill="#4d2d29" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke" font-family="Tajawal,Tahoma,sans-serif">${CITY[key].n}</text>`;
+      });
+      const cur = pointAt(STAGE_ROUTES[stage].map(cityXY), frac);
+      s += `<circle cx="${cur.x.toFixed(1)}" cy="${cur.y.toFixed(1)}" r="${8*k}" fill="#f6b51d" fill-opacity=".55"><animate attributeName="r" values="${8*k};${13*k};${8*k}" dur="1.2s" repeatCount="indefinite"/></circle>`;
+      s += `<circle cx="${cur.x.toFixed(1)}" cy="${cur.y.toFixed(1)}" r="${5.5*k}" fill="#7f2834" stroke="#fff" stroke-width="${2.5*k}"/>`;
+      return s + `</svg>`;
+    }
+    const routeMapEl = document.getElementById("route-map");
+    let routeMapKey = "";
+    function updateRouteMap(){
+      const frac = Math.min(1, currentStageQuestionIndex / stages[stageIndex].questions);
+      const key = stageIndex + ":" + frac.toFixed(3);
+      if(key === routeMapKey) return;
+      routeMapKey = key;
+      routeMapEl.innerHTML = mapSVG(stageIndex, frac, false); // محتوى ثابت من الكود فقط
+    }
+
+    const digit = n => String(n).replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+    const world = document.getElementById("world");
+    const road = document.getElementById("road");
+    const entityLayer = document.getElementById("entity-layer");
+    const player = document.getElementById("player");
+
+    let avatar = "boy";
+    let playerName = "";
+    let stageIndex = 0;
+    let score = 0;
+    let coins = 0;
+    let hearts = 3;
+    let currentStageQuestionIndex = 0; // مؤشر للأسئلة داخل المرحلة الحالية لمنع التكرار
+    let lane = 1; // 0: يسار، 1: وسط، 2: يمين
+    let gameActive = false;
+    let entities = [];
+    let lastFrame = 0;
+    let spawnTimer = 0;
+    let obstacleTimer = 0;
+    let speed = 0.18;
+    let touchStartX = 0;
+    const lanes = [17, 50, 83];
+
+    // تعيين صور الشخصيات في كل الأماكن
+    document.querySelectorAll("[data-avatar-img]").forEach(img => {
+      img.src = AVATAR_SRC[img.dataset.avatarImg];
+    });
+    buildRig(avatar);
+
+    function randomShuffle(items){
+      const copy = [...items];
+      for(let i = copy.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i],copy[j]] = [copy[j],copy[i]];
+      }
+      return copy;
+    }
+
+    function setSpeech(text){ document.getElementById("speech").textContent = text; }
+
+    function updateHud(){
+      document.getElementById("stage-name").textContent = stages[stageIndex].name;
+      document.getElementById("score-value").textContent = digit(score);
+      document.getElementById("coin-value").textContent = digit(coins);
+      document.getElementById("heart-value").textContent = digit(hearts);
+      const total = stages[stageIndex].questions;
+      document.getElementById("question-count").textContent = `${digit(Math.min(currentStageQuestionIndex,total))}/${digit(total)}`;
+      document.getElementById("progress-fill").style.width = `${Math.min(100,(currentStageQuestionIndex / total) * 100)}%`;
+      updateRouteMap();
+    }
+
+    function updatePlayerPosition(){
+      player.style.left = `calc(${lanes[lane]}% - 42px)`;
+    }
+
+    function clearEntities(){
+      entities.forEach(item => item.el.remove());
+      entities = [];
+    }
+
+    function createEntity(type, entityLane, y){
+      const el = document.createElement("div");
+      el.className = `entity ${type}`;
+      el.style.left = `calc(${lanes[entityLane]}% - ${type === "coin" ? 16 : 26}px)`;
+      el.style.top = `${y}%`;
+      entityLayer.appendChild(el);
+      entities.push({el, type, lane:entityLane, y, collected:false});
+    }
+
+    function spawnCoinRow(){
+      const selectedLane = Math.floor(Math.random() * 3);
+      createEntity("coin", selectedLane, -10);
+    }
+
+    function spawnObstacle(){
+      createEntity("obstacle", Math.floor(Math.random() * 3), -15);
+    }
+
+    function startStage(){
+      clearEntities();
+      speed = 0.16 + stageIndex * 0.02;
+      spawnTimer = 0;
+      obstacleTimer = 1200;
+      lane = 1;
+      buildQuestionOrder();
+      currentStageQuestionIndex = 0; // إعادة ضبط الأسئلة لبدء المرحلة من السؤال الأول بدون تكرار
+      updatePlayerPosition();
+      world.dataset.scene = stages[stageIndex].scene;
+      updateHud();
+      setSpeech(`اصطدم بالصناديق (؟) لتظهر لك الأسئلة. المطلوب: ${digit(stages[stageIndex].questions)} أسئلة.`);
+      showMentor();
+    }
+
+    function showMentor(){
+      const mentor = stages[stageIndex].mentor;
+      const stage = stages[stageIndex];
+      const el = (tag, cls, text) => {
+        const node = document.createElement(tag);
+        if(cls) node.className = cls;
+        if(text) node.textContent = text;
+        return node;
+      };
+      const info = el("div");
+      info.append(
+        el("h3", "", mentor[0]),
+        el("p", "", mentor[2]),
+        el("p", "mentor-task", `🎯 مهمتك: أجب عن ${digit(stage.questions)} أسئلة إجابة صحيحة لتنال ${stage.award}.`)
+      );
+      const card = el("article", "mentor-card mt-3");
+      card.append(el("div", "mentor-icon", mentor[1]), info);
+      const mapBox = el("div", "mentor-map");
+      mapBox.append(el("p", "mentor-map-title", `🗺️ مسار رحلتك: ${STAGE_ROUTE_TEXT[stageIndex]}`));
+      const holder = el("div", "mentor-map-svg");
+      holder.innerHTML = mapSVG(stageIndex, 0, true); // محتوى ثابت من الكود فقط
+      mapBox.append(holder);
+      document.getElementById("mentor-content").replaceChildren(card, mapBox);
+      document.getElementById("mentor-overlay").classList.add("show");
+      gameActive = false;
+      road.classList.add("paused");
+    }
+
+    function resumeGame(){
+      gameActive = true;
+      road.classList.remove("paused");
+    }
+
+    function move(direction){
+      if(!gameActive) return;
+      const before = lane;
+      lane += direction;
+      if(lane < 0) lane = 0;
+      if(lane > 2) lane = 2;
+      updatePlayerPosition();
+    }
+
+    function collectCoin(entity){
+      entity.collected = true;
+      entity.el.remove();
+      coins++;
+      score += 2;
+      sfx.coin();
+      updateHud();
+    }
+
+    function hitObstacle(entity){
+      entity.collected = true;
+      entity.el.remove();
+      gameActive = false;
+      road.classList.add("paused");
+      sfx.box();
+      setSpeech("صندوق تحدي معرفي! أجب بشكل صحيح لتستأنف الجري.");
+      setTimeout(showQuestion, 200);
+    }
+
+    function gameLoop(timestamp){
+      if(!lastFrame) lastFrame = timestamp;
+      const delta = Math.min(40, timestamp - lastFrame);
+      lastFrame = timestamp;
+
+      if(gameActive){
+        spawnTimer += delta;
+        obstacleTimer += delta;
+        if(spawnTimer > 850){
+          spawnCoinRow();
+          spawnTimer = 0;
+        }
+        if(obstacleTimer > 3200 - stageIndex * 200){
+          spawnObstacle();
+          obstacleTimer = 0;
+        }
+
+        entities.forEach(entity => {
+          entity.y += speed * delta / 10;
+          entity.el.style.top = `${entity.y}%`;
+
+          if(!entity.collected && entity.y > 72 && entity.y < 89 && entity.lane === lane){
+            if(entity.type === "coin") collectCoin(entity);
+            if(entity.type === "obstacle") hitObstacle(entity);
+          }
+        });
+
+        entities = entities.filter(entity => {
+          if(entity.y > 105 || entity.collected){
+            if(entity.el.parentNode) entity.el.remove();
+            return false;
+          }
+          return true;
+        });
+      }
+      requestAnimationFrame(gameLoop);
+    }
+
+    function showQuestion(){
+      const q = getCurrentQuestion();
+      
+      const options = document.getElementById("answer-options");
+      document.getElementById("question-meta").textContent = `${stages[stageIndex].name} - السؤال ${digit(currentStageQuestionIndex + 1)} من ${digit(stages[stageIndex].questions)}`;
+      document.getElementById("question-text").textContent = q[0];
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("feedback").className = "feedback";
+      document.getElementById("hint-btn").classList.add("hidden");
+      options.innerHTML = "";
+
+      randomShuffle(q[1]).forEach(answer => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "answer-btn";
+        button.textContent = answer;
+        button.addEventListener("click", () => checkAnswer(answer));
+        options.appendChild(button);
+      });
+      document.getElementById("question-overlay").classList.add("show");
+    }
+
+    function checkAnswer(answer){
+      const q = getCurrentQuestion();
+      const feedback = document.getElementById("feedback");
+
+      if(answer === q[2]){
+        feedback.textContent = "إجابة صحيحة وموفقة! انطلق الآن 🌟";
+        feedback.className = "feedback good";
+        score += 10;
+        sfx.correct();
+        currentStageQuestionIndex++;
+        updateHud();
+        document.querySelectorAll(".answer-btn").forEach(button => button.disabled = true);
+        setTimeout(() => {
+          document.getElementById("question-overlay").classList.remove("show");
+          if(currentStageQuestionIndex >= stages[stageIndex].questions){
+            showAward();
+          } else {
+            setSpeech("رائع يا بطل! تابع الجري نحو الصندوق التالي!");
+            resumeGame();
+          }
+        }, 800);
+      } else {
+        feedback.textContent = "الإجابة غير صحيحة، حاول مجدداً أو استخدم التلميح.";
+        feedback.className = "feedback bad";
+        sfx.wrong();
+        hearts = Math.max(0, hearts - 1);
+        updateHud();
+        if(hearts === 0){
+          feedback.textContent = "انتهت القلوب! 💔";
+          document.querySelectorAll(".answer-btn").forEach(button => button.disabled = true);
+          document.getElementById("hint-btn").classList.add("hidden");
+          setTimeout(showGameOver, 1000);
+          return;
+        }
+        document.getElementById("hint-btn").classList.remove("hidden");
+      }
+    }
+
+    function showGameOver(){
+      gameActive = false;
+      road.classList.add("paused");
+      document.getElementById("question-overlay").classList.remove("show");
+      document.getElementById("gameover-text").textContent = `أخطأت في ثلاث إجابات يا ${playerName}. لا بأس، تعلّم من أخطائك وحاول من جديد!`;
+      document.getElementById("gameover-overlay").classList.add("show");
+      sfx.gameOver();
+    }
+
+    function showAward(){
+      const stage = stages[stageIndex];
+      document.getElementById("medal").textContent = stage.medal;
+      document.getElementById("award-title").textContent = `مبروك الحصول على ${stage.award}!`;
+      document.getElementById("award-text").textContent = `أحسنت يا ${playerName}! لقد أجبت عن ${digit(stage.questions)} أسئلة في ${stage.name} بكل جدارة واقتدار.`;
+      document.getElementById("award-overlay").classList.add("show");
+      sfx.win();
+    }
+
+    // تنقية الاسم: إزالة رموز التحكم ورموز قلب اتجاه النص، وتحديد الطول
+    const cleanName = value => value
+      .replace(/[\u0000-\u001F\u007F\u200B-\u200F\u202A-\u202E\u2066-\u2069]/g, "")
+      .replace(/\s+/g, " ").trim().slice(0, 20);
+
+    function startGame(){
+      ensureAudio();
+      const nameField = document.getElementById("player-name");
+      const nameInput = cleanName(nameField.value);
+      if(!nameInput){
+        nameField.classList.add("invalid");
+        nameField.placeholder = "اكتب اسمك أولاً لتبدأ الرحلة";
+        nameField.focus();
+        return;
+      }
+      playerName = nameInput;
+      
+      buildRig(avatar);
+
+      document.getElementById("welcome-screen").classList.remove("active");
+      document.getElementById("game-screen").classList.add("active");
+      startStage();
+    }
+
+    document.querySelectorAll(".avatar-choice").forEach(button => {
+      button.addEventListener("click", () => {
+        avatar = button.dataset.avatar;
+        document.querySelectorAll(".avatar-choice").forEach(item => {
+          const selected = item === button;
+          item.classList.toggle("selected", selected);
+          item.setAttribute("aria-pressed", String(selected));
+        });
+      });
+    });
+
+    const leftBtn = document.getElementById("left-btn");
+    const rightBtn = document.getElementById("right-btn");
+
+    leftBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); move(-1); });
+    rightBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); move(1); });
+
+    document.getElementById("player-name").addEventListener("input", e => e.target.classList.remove("invalid"));
+    document.getElementById("start-btn").addEventListener("click", startGame);
+    document.getElementById("sound-btn").addEventListener("click", (e) => {
+      soundOn = !soundOn;
+      e.currentTarget.textContent = soundOn ? "🔊" : "🔇";
+      e.currentTarget.setAttribute("aria-pressed", String(soundOn));
+      if(soundOn) sfx.coin();
+    });
+    document.getElementById("mentor-next").addEventListener("click", () => {
+      document.getElementById("mentor-overlay").classList.remove("show");
+      resumeGame();
+    });
+    
+    document.getElementById("hint-btn").addEventListener("click", () => {
+      const q = getCurrentQuestion();
+      document.getElementById("feedback").textContent = `💡 تلميح: ${q[3]}`;
+      document.getElementById("feedback").className = "feedback good";
+    });
+
+    document.getElementById("award-next").addEventListener("click", () => {
+      document.getElementById("award-overlay").classList.remove("show");
+      stageIndex++;
+      if(stageIndex >= stages.length){
+        document.getElementById("certificate-name").textContent = playerName;
+        document.getElementById("certificate-avatar").src = AVATAR_SRC[avatar];
+        document.getElementById("certificate-overlay").classList.add("show");
+        sfx.victory();
+      } else {
+        coins = 0;
+        hearts = 3;
+        startStage();
+      }
+    });
+
+    function resetToStart(){
+      stageIndex = 0; score = 0; coins = 0; hearts = 3; currentStageQuestionIndex = 0;
+      gameActive = false;
+      clearEntities();
+      document.getElementById("certificate-overlay").classList.remove("show");
+      document.getElementById("gameover-overlay").classList.remove("show");
+      document.getElementById("question-overlay").classList.remove("show");
+      document.getElementById("game-screen").classList.remove("active");
+      document.getElementById("welcome-screen").classList.add("active");
+      const nameField = document.getElementById("player-name");
+      nameField.value = "";
+      nameField.placeholder = "اكتب اسمك هنا...";
+      playerName = "";
+      updateHud();
+    }
+    document.getElementById("play-again").addEventListener("click", resetToStart);
+    document.getElementById("gameover-restart").addEventListener("click", resetToStart);
+
+    // دعم إيماءات اللمس السريعة (Swipe) على شاشة اللعب
+    world.addEventListener("touchstart", event => { touchStartX = event.changedTouches[0].clientX; }, {passive:true});
+    world.addEventListener("touchend", event => {
+      const diff = event.changedTouches[0].clientX - touchStartX;
+      if(Math.abs(diff) > 35) {
+        move(diff > 0 ? 1 : -1);
+      }
+    }, {passive:true});
+
+    // دعم التحكم عبر لوحة المفاتيح
+    document.addEventListener("keydown", event => {
+      if(!gameActive) return;
+      if(event.key === "ArrowRight") move(1);
+      if(event.key === "ArrowLeft") move(-1);
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      updatePlayerPosition();
+      requestAnimationFrame(gameLoop);
+    });
+  </script>
+ </body>
+</html>
